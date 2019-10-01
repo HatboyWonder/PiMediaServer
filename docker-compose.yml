@@ -59,3 +59,19 @@ services:
     ports:
     - 8112:8112
     restart: unless-stopped
+  
+  plex:
+    image: linuxserver/plex
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+    volumes:
+      - /media/plex/configs/plex:/config
+      - /media/plex/media/Movies:/movies
+      - /media/plex/media/TV:/tv
+    ports:
+    - 32400:32400
+    restart: unless-stopped
