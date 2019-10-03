@@ -9,9 +9,9 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - /media/plex/configs/sonarr:/config
-      - /media/plex:/tv
-      - /media/plex/torrents:/downloads
+      - /data/configs/sonarr:/config
+      - /data:/tv
+      - /data/torrents:/downloads
     ports:
       - 8989:8989
     restart: unless-stopped
@@ -24,9 +24,9 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - /media/plex/configs/radarr:/config
-      - /media/plex:/movies
-      - /media/plex/torrents:/downloads
+      - /data/configs/radarr:/config
+      - /data:/movies
+      - /data/torrents:/downloads
     ports:
       - 7878:7878
     restart: unless-stopped
@@ -35,7 +35,7 @@ services:
     image: linuxserver/jackett
     container_name: jackett
     volumes:
-    - /media/plex/configs/jackett:/config
+    - /data/configs/jackett:/config
     environment:
     - PUID=1000
     - PGID=1000
@@ -54,8 +54,8 @@ services:
       - TZ=Europe/London
       - DELUGE_LOGLEVEL=error
     volumes:
-      - /media/plex/configs/deluge:/config
-      - /media/plex/torrents:/downloads
+      - /data/configs/deluge:/config
+      - /data/torrents:/downloads
     ports:
     - 8112:8112
     restart: unless-stopped
@@ -69,9 +69,9 @@ services:
       - PGID=1000
       - VERSION=docker
     volumes:
-      - /media/plex/configs/plex:/config
-      - /media/plex/media/Movies:/movies
-      - /media/plex/media/TV:/tv
+      - /data/configs/plex:/config
+      - /data/media/Movies:/movies
+      - /data/media/TV:/tv
     ports:
     - 32400:32400
     restart: unless-stopped
