@@ -13,6 +13,8 @@ This project provides a single `docker-compose` file which sets up a whole media
 * [Deluge](https://github.com/deluge-torrent/deluge): "Deluge is a BitTorrent client that utilizes a daemon/client model. It has various user interfaces available such as the GTK-UI, Web-UI and a Console-UI. It uses libtorrent at it's core to handle the BitTorrent protocol."
 
 ## Prerequisites
+
+### Software
 Installing docker on the raspberry pi should be as simple as calling:
 ```
 curl -sSL https://get.docker.com | sh
@@ -24,6 +26,30 @@ pip install docker-compose
 ```
 
 For other operating systems the installation should be straight forward.
+
+
+### Data location
+The location where you store your data has to be handled with care in order for everything to function properly. Many docker images suggest a different approach which is most of the time simply wrong. Therefore the following file hierarchy is suggested:
+
+```
+# root folder for sonarr as it needs to be able to see both /torrents and /media
+/data
+    /configs
+        /plex
+        /sonarr
+        /radarr
+        /jackett
+        /deluge
+
+    # location for the actual media. moved here by sonarr and consumed by plex
+    /media
+        /TV
+        /Movies
+
+    # location for download client. this must be also visible to sonarr, 
+    # as it picks up the files from there and moves them to the media folder
+    /torrents
+```
 
 ## Running it
 With `docker-compose` installed it is as simple as calling
