@@ -1,6 +1,6 @@
 # PI Media Server
 
-This project provides a single `docker-compose` file which sets up a whole media server including the right file path setup. The server is composed of 4 services:
+This project provides a single `docker-compose` file which sets up a whole media server including the right file path setup. The server is composed of 5 services:
 
 * [Plex](https://www.plex.tv/): Media server which is the frontend for showing the shows and movies. It can be exposed externally and shared with others very easily. 
 
