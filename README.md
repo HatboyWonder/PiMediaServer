@@ -33,14 +33,15 @@ The location where you store your data has to be handled with care in order for 
 
 ```
 # root folder for sonarr as it needs to be able to see both /torrents and /media
-/data
-    /configs
-        /plex
-        /sonarr
-        /radarr
-        /jackett
-        /deluge
 
+# somewhere on SSD or storage where I/O does not hurt as much
+/configs
+    /plex
+    /sonarr
+    /radarr
+    /jackett
+    /deluge
+/data
     # location for the actual media. moved here by sonarr and consumed by plex
     /media
         /TV
