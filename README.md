@@ -10,6 +10,8 @@ This project provides a single `docker-compose` file which sets up a whole media
 
 * [Jackett](https://github.com/Jackett/Jackett): "Jackett works as a proxy server: it translates queries from apps (Sonarr, Radarr, SickRage, CouchPotato, Mylar, Lidarr, DuckieTV, qBittorrent, Nefarious etc) into tracker-site-specific http queries, parses the html response, then sends results back to the requesting software. This allows for getting recent uploads (like RSS) and performing searches. Jackett is a single repository of maintained indexer scraping & translation logic - removing the burden from other apps."
 
+* [Ombi](https://github.com/tidusjar/Ombi): Request movies or shows on `Radarr` or `Sonarr` via a single interface.
+
 * [Deluge](https://github.com/deluge-torrent/deluge): "Deluge is a BitTorrent client that utilizes a daemon/client model. It has various user interfaces available such as the GTK-UI, Web-UI and a Console-UI. It uses libtorrent at it's core to handle the BitTorrent protocol."
 
 ## Prerequisites
@@ -27,7 +29,6 @@ pip install docker-compose
 
 For other operating systems the installation should be straight forward.
 
-
 ### Data location
 The location where you store your data has to be handled with care in order for everything to function properly. Many docker images suggest a different approach which is most of the time simply wrong. Therefore the following file hierarchy is suggested:
 
@@ -35,21 +36,26 @@ The location where you store your data has to be handled with care in order for 
 # root folder for sonarr as it needs to be able to see both /torrents and /media
 
 # somewhere on SSD or storage where I/O does not hurt as much
-/configs
+configs
     /plex
     /sonarr
     /radarr
     /jackett
     /deluge
-/data
+data
     # location for the actual media. moved here by sonarr and consumed by plex
     /media
-        /TV
-        /Movies
+        /tv
+        /movies
 
     # location for download client. this must be also visible to sonarr, 
     # as it picks up the files from there and moves them to the media folder
     /torrents
+```
+
+Create the folder structure in the same directory as the `docker-compose` file
+```
+mkdir -p configs/{plex,sonarr,radarr,jackett,deluge,ombi} data/{media/{tv,movies},torrents}
 ```
 
 ## Running it
@@ -58,15 +64,34 @@ With `docker-compose` installed it is as simple as calling
 docker-compose up -d
 ```
 
+To include `Ombi`, instead call
+```
+docker-compose -f docker-compose.yml -f docker-compose.ombi.yml up -d
+```
+
 ## Setup
 With all containers running there is some more configuration tasks to do. Starting bottom up:
 
-1. Navigate to the `Jackett` web interface ([localhost:9117](localhost:9117)). Search and add your favourite to you indexer list.
+1. Navigate to the `Jackett` web interface (port: 9117). 
+    * Search and add your favourite indexers to your indexer list.
 
-2. Navigate to the `Deluge` web interface ([localhost:8112](localhost:8112)). Set the download directory to `/downloads`. Activate the `Label` and `Extractor` plugins. Also download the `AutoRemovePlus` plugin from [here](https://github.com/omaralvarez/deluge-autoremoveplus) and install it. This will remove completed downloads from the torrent location.
+2. Navigate to the `Deluge` web interface (port: 8112). 
+    * Set the download directory to `/downloads`. 
+    * Activate the `Label` and `Extractor` plugins. 
+    * Download the `AutoRemovePlus` plugin from [here](https://github.com/omaralvarez/deluge-autoremoveplus) and install it. This will remove completed downloads from the torrent location.
 
-3. Navigate to the `Sonarr` and/or `Radarr` web interface. Go to the Settings page. Now configure your indexers to point to the `Jackett` indexer urls and setup the download client.
+3. Navigate to the `Sonarr` (port: 8989) and/or `Radarr` (port: 7878) web interface. 
+    * Go to the Settings page. 
+    * Configure your indexers to point to the `Jackett` indexer urls.
+    * Setup the download client.
 
-4. Navigate to the `Plex` web interface ([localhost:32400](localhost:32400)). Setup your libraries, pointing them to the ones configured in the `docker-compose`.
+4. Navigate to the `Plex` web interface (port: 32400). 
+    * Setup your libraries, pointing them to the ones configured in the `docker-compose`.
 
-5. Enjoy!
+5. If `Ombi` is included, navigate to the `Ombi` web interface (port: 3579).
+    * Go to the Settings page.
+    * Configure `Plex` (Media Server > Plex).
+    * Configure `Sonarr` (TV > Sonarr).
+    * Configure `Radarr` (Movies > Radarr).
+
+6. Enjoy!
