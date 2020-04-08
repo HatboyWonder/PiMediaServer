@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
 
   deluge:
-    image: linuxserver/deluge
+    image: linuxserver/deluge:8a915150-ls21
     container_name: deluge
     environment:
       - PUID=1000
