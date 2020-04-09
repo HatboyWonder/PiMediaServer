@@ -61,7 +61,7 @@ mkdir -p configs/{plex,sonarr,radarr,jackett,transmission,ombi} data/{media/{tv,
 ## Running it
 With `docker-compose` installing it is as simple as calling
 ```
-docker-compose up -f docker-compose.yaml -f docker-compose.transmission.yml -d
+docker-compose -f docker-compose.yaml -f docker-compose.transmission.yml up -d
 ```
 
 To include `Ombi`, instead call
@@ -87,7 +87,7 @@ With all containers running there is some more configuration tasks to do. Starti
     * Add default paths (Add new series/movie > Search > Add different path)
         * Sonarr: `/data/media/tv`
         * Radarr: `/data/media/movies`
-        
+
 3. Navigate to the `Plex` web interface (port: 32400). 
     * Setup your libraries, pointing them to the ones configured in the `docker-compose`.
 
