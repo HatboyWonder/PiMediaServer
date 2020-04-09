@@ -44,21 +44,6 @@ services:
       - 9117:9117
     restart: unless-stopped
 
-  deluge:
-    image: linuxserver/deluge:8a915150-ls21
-    container_name: deluge
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-      - DELUGE_LOGLEVEL=error
-    volumes:
-      - ./configs/deluge:/config
-      - ./data/torrents:/downloads
-    ports:
-      - 8112:8112
-    restart: unless-stopped
-
   plex:
     image: linuxserver/plex
     container_name: plex
