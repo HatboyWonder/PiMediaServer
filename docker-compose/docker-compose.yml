@@ -10,8 +10,7 @@ services:
       - TZ=Europe/London
     volumes:
       - ./configs/sonarr:/config
-      - ./data:/tv
-      - ./data/torrents:/downloads
+      - ./data:/data
     ports:
       - 8989:8989
     restart: unless-stopped
@@ -25,8 +24,7 @@ services:
       - TZ=Europe/London
     volumes:
       - ./configs/radarr:/config
-      - ./data:/movies
-      - ./data/torrents:/downloads
+      - ./data:/data
     ports:
       - 7878:7878
     restart: unless-stopped

@@ -79,7 +79,15 @@ With all containers running there is some more configuration tasks to do. Starti
     * Go to the Settings page. 
     * Configure your indexers to point to the `Jackett` indexer urls.
     * Setup the download client.
-
+        * Add transmission and set Category `tv` (sonarr) or `movies` (radarr).
+        * Add Remote Path Mapping
+            * Host: transmission url
+            * Remote Path: `/downloads`
+            * Local Path: `/data/torrents/`
+    * Add default paths (Add new series/movie > Search > Add different path)
+        * Sonarr: `/data/media/tv`
+        * Radarr: `/data/media/movies`
+        
 3. Navigate to the `Plex` web interface (port: 32400). 
     * Setup your libraries, pointing them to the ones configured in the `docker-compose`.
 
