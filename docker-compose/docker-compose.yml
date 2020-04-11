@@ -9,8 +9,8 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - ./configs/sonarr:/config
-      - ${MOUNT_POINT}:/data
+      - ${CONFIG_PATH}/sonarr:/config
+      - ${DATA_PATH}:/data
     restart: unless-stopped
 
   radarr:
@@ -21,15 +21,15 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - ./configs/radarr:/config
-      - ${MOUNT_POINT}:/data
+      - ${CONFIG_PATH}/radarr:/config
+      - ${DATA_PATH}:/data
     restart: unless-stopped
 
   jackett:
     image: linuxserver/jackett
     container_name: jackett
     volumes:
-      - ./configs/jackett:/config
+      - ${CONFIG_PATH}/jackett:/config
     environment:
       - PUID=1000
       - PGID=1000
@@ -44,7 +44,7 @@ services:
       - PGID=1000
       - VERSION=docker
     volumes:
-      - ./configs/plex:/config
-      - ${MOUNT_POINT}/media/movies:/movies
-      - ${MOUNT_POINT}/media/tv:/tv
+      - ${CONFIG_PATH}/plex:/config
+      - ${DATA_PATH}/media/movies:/movies
+      - ${DATA_PATH}/media/tv:/tv
     restart: unless-stopped

@@ -9,9 +9,9 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - ./configs/transmission:/config
-      - ${MOUNT_POINT}/torrents:/downloads
-      - ${MOUNT_POINT}/torrents:/watch
+      - ${CONFIG_PATH}/transmission:/config
+      - ${DATA_PATH}/torrents:/downloads
+      - ${DATA_PATH}/torrents:/watch
     ports:
       - 9091:9091
       - 51413:51413

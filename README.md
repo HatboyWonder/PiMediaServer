@@ -67,7 +67,8 @@ OPENVPN_CONFIG=...
 OPENVPN_USERNAME=...
 OPENVPN_PASSWORD=...
 
-MOUNT_POINT=/path/to/data/folder
+DATA_PATH=/path/to/data/folder
+CONFIG_PATH=/path/to/config/folder
 ```
 
 Only include [OpenVPN settings](https://haugene.github.io/docker-transmission-openvpn/supported-providers/) when using a vpn via `transmission-openvpn` image.
