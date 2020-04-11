@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  transmission-openvpn:
+    image: haugene/transmission-openvpn
+    container_name: transmission-openvpn
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - CREATE_TUN_DEVICE=true
+      - OPENVPN_PROVIDER=${OPENVPN_PROVIDER}
+      - OPENVPN_CONFIG=${OPENVPN_CONFIG}
+      - OPENVPN_USERNAME=${OPENVPN_USERNAME}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
+      - LOCAL_NETWORK=192.168.0.0/16
+      - TRANSMISSION_WEB_UI=combustion
+    volumes:
+      - ./configs/transmission:/data/transmission-home
+      - ${MOUNT_POINT}/torrents/complete:/data/completed
+      - ${MOUNT_POINT}/torrents/incomplete:/data/incomplete
+    cap_add:
+      - NET_ADMIN
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    ports:
+      - 9091:9091 # transmission
+      - 8989:8989 # sonarr
+      - 7878:7878 # radarr
+      - 9117:9117 # jackett
+      - 32400:32400 # plex
+    restart: unless-stopped
+
+  sonarr:
+    network_mode: service:transmission-openvpn
+
+  radarr:
+    network_mode: service:transmission-openvpn
+
+  jackett:
+    network_mode: service:transmission-openvpn
+
+  plex:
+    network_mode: service:transmission-openvpn

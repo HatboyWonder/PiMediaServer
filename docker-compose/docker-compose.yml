@@ -10,9 +10,7 @@ services:
       - TZ=Europe/London
     volumes:
       - ./configs/sonarr:/config
-      - ./data:/data
-    ports:
-      - 8989:8989
+      - ${MOUNT_POINT}:/data
     restart: unless-stopped
 
   radarr:
@@ -24,9 +22,7 @@ services:
       - TZ=Europe/London
     volumes:
       - ./configs/radarr:/config
-      - ./data:/data
-    ports:
-      - 7878:7878
+      - ${MOUNT_POINT}:/data
     restart: unless-stopped
 
   jackett:
@@ -38,8 +34,6 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
-    ports:
-      - 9117:9117
     restart: unless-stopped
 
   plex:
@@ -51,8 +45,6 @@ services:
       - VERSION=docker
     volumes:
       - ./configs/plex:/config
-      - ./data/media/movies:/movies
-      - ./data/media/tv:/tv
-    ports:
-      - 32400:32400
+      - ${MOUNT_POINT}/media/movies:/movies
+      - ${MOUNT_POINT}/media/tv:/tv
     restart: unless-stopped
