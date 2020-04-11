@@ -12,7 +12,7 @@ This project provides a single `docker-compose` file which sets up a whole media
 
 * [Ombi](https://github.com/tidusjar/Ombi): Request movies or shows on `Radarr` or `Sonarr` via a single interface.
 
-* [Deluge](https://github.com/deluge-torrent/deluge): "Deluge is a BitTorrent client that utilizes a daemon/client model. It has various user interfaces available such as the GTK-UI, Web-UI and a Console-UI. It uses libtorrent at it's core to handle the BitTorrent protocol."
+* [Transmission](https://github.com/transmission/transmission): "Uses fewer resources than other clients. Daemon ideal for servers, embedded systems, and headless use."
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ configs
     /sonarr
     /radarr
     /jackett
-    /deluge
+    /transmission
 data
     # location for the actual media. moved here by sonarr and consumed by plex
     /media
@@ -55,18 +55,39 @@ data
 
 Create the folder structure in the same directory as the `docker-compose` file
 ```
-mkdir -p configs/{plex,sonarr,radarr,jackett,deluge,ombi} data/{media/{tv,movies},torrents}
+mkdir -p configs/{plex,sonarr,radarr,jackett,transmission,ombi} data/{media/{tv,movies},torrents/{complete,incomplete}}
 ```
 
-## Running it
-With `docker-compose` installed it is as simple as calling
+### Configuration
+
+Create `.env` file in the same directory as `docker-compose` file with the following structure
 ```
-docker-compose up -d
+OPENVPN_PROVIDER=...
+OPENVPN_CONFIG=...
+OPENVPN_USERNAME=...
+OPENVPN_PASSWORD=...
+
+DATA_PATH=/path/to/data/folder
+CONFIG_PATH=/path/to/config/folder
+```
+
+Only include [OpenVPN settings](https://haugene.github.io/docker-transmission-openvpn/supported-providers/) when using a vpn via `transmission-openvpn` image.
+
+## Running it
+
+With `docker-compose` installing it is as simple as calling
+```
+docker-compose -f docker-compose.yaml -f docker-compose.transmission.yml up -d
 ```
 
 To include `Ombi`, instead call
 ```
-docker-compose -f docker-compose.yml -f docker-compose.ombi.yml up -d
+docker-compose -f docker-compose.yml -f docker-compose.transmission.yml -f docker-compose.ombi.yml up -d
+```
+
+To use `OpenVPN` instead use the following command
+```
+docker-compose -f docker-compose.yml -f docker-compose.transmission-openvpn.yml -f docker-compose.ombi.yml up -d
 ```
 
 ## Setup
@@ -75,23 +96,26 @@ With all containers running there is some more configuration tasks to do. Starti
 1. Navigate to the `Jackett` web interface (port: 9117). 
     * Search and add your favourite indexers to your indexer list.
 
-2. Navigate to the `Deluge` web interface (port: 8112). 
-    * Set the download directory to `/downloads`. 
-    * Activate the `Label` and `Extractor` plugins. 
-    * Download the `AutoRemovePlus` plugin from [here](https://github.com/omaralvarez/deluge-autoremoveplus) and install it. This will remove completed downloads from the torrent location.
-
-3. Navigate to the `Sonarr` (port: 8989) and/or `Radarr` (port: 7878) web interface. 
+2. Navigate to the `Sonarr` (port: 8989) and/or `Radarr` (port: 7878) web interface.
     * Go to the Settings page. 
     * Configure your indexers to point to the `Jackett` indexer urls.
     * Setup the download client.
+        * Add transmission and set Category `tv` (sonarr) or `movies` (radarr).
+        * Add Remote Path Mapping
+            * Host: transmission url
+            * Remote Path: `/downloads` (`/data/completed/` with `transmission-openvpn` image)
+            * Local Path: `/data/torrents/` (`/data/torrents/complete/` with `transmission-openvpn` image)
+    * Add default paths (Add new series/movie > Search > Add different path)
+        * Sonarr: `/data/media/tv`
+        * Radarr: `/data/media/movies`
 
-4. Navigate to the `Plex` web interface (port: 32400). 
+3. Navigate to the `Plex` web interface (port: 32400). 
     * Setup your libraries, pointing them to the ones configured in the `docker-compose`.
 
-5. If `Ombi` is included, navigate to the `Ombi` web interface (port: 3579).
+4. If `Ombi` is included, navigate to the `Ombi` web interface (port: 3579).
     * Go to the Settings page.
     * Configure `Plex` (Media Server > Plex).
     * Configure `Sonarr` (TV > Sonarr).
     * Configure `Radarr` (Movies > Radarr).
 
-6. Enjoy!
+5. Enjoy!

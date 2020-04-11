@@ -9,7 +9,7 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - ./configs/ombi:/config
+      - ${CONFIG_PATH}/ombi:/config
     ports:
       - 3579:3579
     restart: unless-stopped

@@ -9,11 +9,8 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - ./configs/sonarr:/config
-      - ./data:/tv
-      - ./data/torrents:/downloads
-    ports:
-      - 8989:8989
+      - ${CONFIG_PATH}/sonarr:/config
+      - ${DATA_PATH}:/data
     restart: unless-stopped
 
   radarr:
@@ -24,39 +21,19 @@ services:
       - PGID=1000
       - TZ=Europe/London
     volumes:
-      - ./configs/radarr:/config
-      - ./data:/movies
-      - ./data/torrents:/downloads
-    ports:
-      - 7878:7878
+      - ${CONFIG_PATH}/radarr:/config
+      - ${DATA_PATH}:/data
     restart: unless-stopped
 
   jackett:
     image: linuxserver/jackett
     container_name: jackett
     volumes:
-      - ./configs/jackett:/config
+      - ${CONFIG_PATH}/jackett:/config
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/London
-    ports:
-      - 9117:9117
-    restart: unless-stopped
-
-  deluge:
-    image: linuxserver/deluge:8a915150-ls21
-    container_name: deluge
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-      - DELUGE_LOGLEVEL=error
-    volumes:
-      - ./configs/deluge:/config
-      - ./data/torrents:/downloads
-    ports:
-      - 8112:8112
     restart: unless-stopped
 
   plex:
@@ -67,9 +44,7 @@ services:
       - PGID=1000
       - VERSION=docker
     volumes:
-      - ./configs/plex:/config
-      - ./data/media/movies:/movies
-      - ./data/media/tv:/tv
-    ports:
-      - 32400:32400
+      - ${CONFIG_PATH}/plex:/config
+      - ${DATA_PATH}/media/movies:/movies
+      - ${DATA_PATH}/media/tv:/tv
     restart: unless-stopped
