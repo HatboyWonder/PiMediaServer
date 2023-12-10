@@ -11,6 +11,8 @@ services:
     volumes:
       - ${CONFIG_PATH}/sonarr:/config
       - ${DATA_PATH}:/data
+    ports:
+      - 8989:8989
     restart: unless-stopped
 
   radarr:
@@ -23,17 +25,8 @@ services:
     volumes:
       - ${CONFIG_PATH}/radarr:/config
       - ${DATA_PATH}:/data
-    restart: unless-stopped
-
-  jackett:
-    image: ghcr.io/linuxserver/jackett
-    container_name: jackett
-    volumes:
-      - ${CONFIG_PATH}/jackett:/config
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
+    ports:
+      - 7878:7878
     restart: unless-stopped
 
   plex:
@@ -47,6 +40,21 @@ services:
       - TZ=Europe/London
     volumes:
       - ${CONFIG_PATH}/plex:/config
-      - ${DATA_PATH}/media/Movies:/movies
-      - ${DATA_PATH}/media/TV:/tv
+      - ${DATA_PATH}/media/movies:/movies
+      - ${DATA_PATH}/media/tv:/tv
+    ports:
+      - 32400:32400
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ${CONFIG_PATH}/prowlarr:/config
+    ports:
+      - 9696:9696
     restart: unless-stopped
