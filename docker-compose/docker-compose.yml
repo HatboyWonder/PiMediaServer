@@ -2,7 +2,7 @@ version: "3"
 
 services:
   sonarr:
-    image: ghcr.io/linuxserver/sonarr:preview
+    image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     environment:
       - PUID=1000
@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   radarr:
-    image: ghcr.io/linuxserver/radarr:arm32v7-version-v0.2.0.1504
+    image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     environment:
       - PUID=1000
@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
 
   plex:
-    image: ghcr.io/linuxserver/plex:bionic
+    image: lscr.io/linuxserver/plex:latest
     container_name: plex
     network_mode: host
     environment:
@@ -42,8 +42,6 @@ services:
       - ${CONFIG_PATH}/plex:/config
       - ${DATA_PATH}/media/movies:/movies
       - ${DATA_PATH}/media/tv:/tv
-    ports:
-      - 32400:32400
     restart: unless-stopped
 
   prowlarr:
