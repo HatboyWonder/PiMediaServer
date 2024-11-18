@@ -56,3 +56,20 @@ services:
     ports:
       - 9696:9696
     restart: unless-stopped
+  
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - ${CONFIG_PATH}/transmission:/config
+      - ${DATA_PATH}/torrents:/downloads
+      - ${DATA_PATH}/torrents:/watch
+    ports:
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
+    restart: unless-stopped
