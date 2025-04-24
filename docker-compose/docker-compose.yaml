@@ -27,21 +27,23 @@ services:
       - 7878:7878
     restart: unless-stopped
 
-  # plex:
-  #   image: lscr.io/linuxserver/plex:latest
-  #   container_name: plex
-  #   network_mode: host
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - VERSION=latest
-  #     - TZ=Europe/London
-  #   volumes:
-  #     - ${CONFIG_PATH}/plex:/config
-  #     - ${DATA_PATH}/media/movies:/movies
-  #     - ${DATA_PATH}/media/tv:/tv
-  #   restart: unless-stopped
-  
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=latest
+      - TZ=Europe/London
+    volumes:
+      - ${CONFIG_PATH}/plex:/config
+      - ${DATA_PATH}/media/movies:/movies
+      - ${DATA_PATH}/media/tv:/tv
+    restart: unless-stopped
+    profiles:
+      - plex
+
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
     container_name: jellyfin
@@ -56,6 +58,8 @@ services:
     ports:
       - 8096:8096
     restart: unless-stopped
+    profiles:
+      - jellyfin
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -69,7 +73,7 @@ services:
     ports:
       - 9696:9696
     restart: unless-stopped
-  
+
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
@@ -86,3 +90,5 @@ services:
       - 51413:51413
       - 51413:51413/udp
     restart: unless-stopped
+    profiles:
+      - transmission
