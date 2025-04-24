@@ -1,1 +1,1 @@
-docker compose pull && ./up.sh
+docker compose pull && ./start.sh
