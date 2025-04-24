@@ -1,1 +1,1 @@
-docker compose -f docker-compose.yml -f docker-compose.transmission.yml restart
+docker compose restart
