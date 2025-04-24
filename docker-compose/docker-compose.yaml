@@ -1,0 +1,94 @@
+services:
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - ${CONFIG_PATH}/sonarr:/config
+      - ${DATA_PATH}:/data
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - ${CONFIG_PATH}/radarr:/config
+      - ${DATA_PATH}:/data
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=latest
+      - TZ=Europe/London
+    volumes:
+      - ${CONFIG_PATH}/plex:/config
+      - ${DATA_PATH}/media/movies:/movies
+      - ${DATA_PATH}/media/tv:/tv
+    restart: unless-stopped
+    profiles:
+      - plex
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ${CONFIG_PATH}/jellyfin:/config
+      - ${DATA_PATH}/media/tv:/data/tvshows
+      - ${DATA_PATH}/media/movies:/data/movies
+    ports:
+      - 8096:8096
+    restart: unless-stopped
+    profiles:
+      - jellyfin
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ${CONFIG_PATH}/prowlarr:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - ${CONFIG_PATH}/transmission:/config
+      - ${DATA_PATH}/torrents:/data/torrents
+      - ${DATA_PATH}/torrents:/watch
+    ports:
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
+    restart: unless-stopped
+    profiles:
+      - transmission

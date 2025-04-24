@@ -1,0 +1,1 @@
+docker compose pull && ./up.sh
