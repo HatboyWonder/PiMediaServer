@@ -5,13 +5,24 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
+      - TZ=${TZ}
     volumes:
       - ${CONFIG_PATH}/sonarr:/config
       - ${DATA_PATH}:/data
     ports:
       - 8989:8989
     restart: unless-stopped
+    depends_on:
+      prowlarr:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - mediaserver
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
@@ -19,13 +30,45 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
+      - TZ=${TZ}
     volumes:
       - ${CONFIG_PATH}/radarr:/config
       - ${DATA_PATH}:/data
     ports:
       - 7878:7878
     restart: unless-stopped
+    depends_on:
+      prowlarr:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7878/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - mediaserver
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - ${CONFIG_PATH}/prowlarr:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9696/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - mediaserver
 
   plex:
     image: lscr.io/linuxserver/plex:latest
@@ -35,11 +78,11 @@ services:
       - PUID=1000
       - PGID=1000
       - VERSION=latest
-      - TZ=Europe/London
+      - TZ=${TZ}
     volumes:
       - ${CONFIG_PATH}/plex:/config
-      - ${DATA_PATH}/media/movies:/movies
-      - ${DATA_PATH}/media/tv:/tv
+      - ${DATA_PATH}/media/movies:/data/movies
+      - ${DATA_PATH}/media/tv:/data/tv
     restart: unless-stopped
     profiles:
       - plex
@@ -50,48 +93,48 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=${TZ}
     volumes:
       - ${CONFIG_PATH}/jellyfin:/config
-      - ${DATA_PATH}/media/tv:/data/tvshows
       - ${DATA_PATH}/media/movies:/data/movies
+      - ${DATA_PATH}/media/tv:/data/tv
     ports:
       - 8096:8096
     restart: unless-stopped
     profiles:
       - jellyfin
+    networks:
+      - mediaserver
 
-  prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-    volumes:
-      - ${CONFIG_PATH}/prowlarr:/config
-    ports:
-      - 9696:9696
-    restart: unless-stopped
-
+  # NOTE: 'transmission' and 'transmission-openvpn' both bind host port 9091.
+  # Only activate ONE of these profiles at a time via COMPOSE_PROFILES.
+  # Setting both simultaneously will cause a port conflict on startup.
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
+      - TZ=${TZ}
     volumes:
       - ${CONFIG_PATH}/transmission:/config
       - ${DATA_PATH}/torrents:/data/torrents
-      - ${DATA_PATH}/torrents:/watch
+      - ${DATA_PATH}/torrents/watch:/watch
     ports:
       - 9091:9091
       - 51413:51413
       - 51413:51413/udp
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/transmission/web/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     profiles:
       - transmission
+    networks:
+      - mediaserver
 
   transmission-openvpn:
     image: haugene/transmission-openvpn
@@ -101,20 +144,26 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
-      - OPENVPN_PROVIDER=${OPENVPN_PROVIDER}
-      - OPENVPN_CONFIG=${OPENVPN_CONFIG}
-      - OPENVPN_USERNAME=${OPENVPN_USERNAME}
-      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - TZ=${TZ}
+      - OPENVPN_PROVIDER=${OPENVPN_PROVIDER:?Set OPENVPN_PROVIDER in .env (e.g. NORDVPN)}
+      - OPENVPN_CONFIG=${OPENVPN_CONFIG:?Set OPENVPN_CONFIG in .env (e.g. uk1234)}
+      - OPENVPN_USERNAME=${OPENVPN_USERNAME:?Set OPENVPN_USERNAME in .env}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD:?Set OPENVPN_PASSWORD in .env}
     volumes:
       - ${CONFIG_PATH}/transmission-openvpn:/config
       - ${DATA_PATH}/torrents:/data/torrents
     logging:
       driver: json-file
       options:
-        max-size: 10m
+        max-size: "10m"
     ports:
       - 9091:9091
     restart: unless-stopped
     profiles:
       - transmission-openvpn
+    networks:
+      - mediaserver
+
+networks:
+  mediaserver:
+    name: mediaserver

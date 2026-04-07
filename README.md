@@ -1,121 +1,138 @@
 # PI Media Server
 
-This project provides a single `docker-compose` file which sets up a whole media server including the right file path setup. The server is composed of 5 services:
+A single `docker-compose` file that sets up a complete self-hosted media server stack on a Raspberry Pi (or any Linux host). Services are enabled and disabled via **Docker Compose profiles** — no need to juggle multiple compose files.
 
-* [Plex](https://www.plex.tv/): Media server which is the frontend for showing the shows and movies. It can be exposed externally and shared with others very easily. 
+## Services
 
-* [Sonarr](https://github.com/Sonarr/Sonarr): "Sonarr is a PVR for Usenet and BitTorrent users. It can monitor multiple RSS feeds for new episodes of your favorite shows and will grab, sort and rename them. It can also be configured to automatically upgrade the quality of files already downloaded when a better quality format becomes available".
+| Service | Description | Port | Profile |
+|---|---|---|---|
+| [Sonarr](https://sonarr.tv/) | PVR for TV shows — monitors RSS feeds, grabs, sorts and renames episodes | 8989 | *(always on)* |
+| [Radarr](https://radarr.video/) | Same as Sonarr but for movies | 7878 | *(always on)* |
+| [Prowlarr](https://github.com/Prowlarr/Prowlarr) | Centralized indexer manager — syncs indexers to Sonarr & Radarr automatically | 9696 | *(always on)* |
+| [Plex](https://www.plex.tv/) | Media frontend for streaming; supports external sharing | host network | `plex` |
+| [Jellyfin](https://jellyfin.org/) | Open-source Plex alternative, fully self-hosted | 8096 | `jellyfin` |
+| [Transmission](https://transmissionbt.com/) | Lightweight BitTorrent download client | 9091 | `transmission` |
+| [Transmission + OpenVPN](https://github.com/haugene/docker-transmission-openvpn) | Transmission routed through a VPN tunnel | 9091 | `transmission-openvpn` |
 
-* [Radarr](https://github.com/Radarr/Radarr): Same as `Sonarr` but for movies.
+> **Note:** `transmission` and `transmission-openvpn` both bind host port 9091. Only activate **one** of them at a time.
 
-* [Jackett](https://github.com/Jackett/Jackett): "Jackett works as a proxy server: it translates queries from apps (Sonarr, Radarr, SickRage, CouchPotato, Mylar, Lidarr, DuckieTV, qBittorrent, Nefarious etc) into tracker-site-specific http queries, parses the html response, then sends results back to the requesting software. This allows for getting recent uploads (like RSS) and performing searches. Jackett is a single repository of maintained indexer scraping & translation logic - removing the burden from other apps."
-
-* [Ombi](https://github.com/tidusjar/Ombi): Request movies or shows on `Radarr` or `Sonarr` via a single interface.
-
-* [Transmission](https://github.com/transmission/transmission): "Uses fewer resources than other clients. Daemon ideal for servers, embedded systems, and headless use."
+> **Note:** `plex` uses `network_mode: host` (required for DLNA/discovery) and therefore does not participate in the shared Docker network. It accesses media via host-mounted volumes.
 
 ## Prerequisites
 
-### Software
-Installing docker on the raspberry pi should be as simple as calling:
-```
-curl -sSL https://get.docker.com | sh
-```
+### Docker and Docker Compose v2
 
-To install `docker-compose` on raspberry pi the easiest way is to install [pip](https://www.raspberrypi.org/documentation/linux/software/python.md) and then call:
-```
-pip install docker-compose
-```
+```bash
+# Install Docker (Raspberry Pi / Debian-based)
+curl -fsSL https://get.docker.com | sh
 
-For other operating systems the installation should be straight forward.
+# Add your user to the docker group (avoid needing sudo)
+sudo usermod -aG docker $USER
+# Log out and back in for this to take effect
 
-### Data location
-The location where you store your data has to be handled with care in order for everything to function properly. Many docker images suggest a different approach which is most of the time simply wrong. Therefore the following file hierarchy is suggested:
-
-```
-# root folder for sonarr as it needs to be able to see both /torrents and /media
-
-# somewhere on SSD or storage where I/O does not hurt as much
-configs
-    /plex
-    /sonarr
-    /radarr
-    /jackett
-    /transmission
-data
-    # location for the actual media. moved here by sonarr and consumed by plex
-    /media
-        /tv
-        /movies
-
-    # location for download client. this must be also visible to sonarr, 
-    # as it picks up the files from there and moves them to the media folder
-    /torrents
+# Docker Compose v2 is bundled with Docker Desktop and modern Docker Engine.
+# Verify:
+docker compose version
 ```
 
-Create the folder structure in the same directory as the `docker-compose` file
-```
-mkdir -p configs/{plex,sonarr,radarr,jackett,transmission,ombi} data/{media/{tv,movies},torrents/{complete,incomplete}}
-```
+### Data directory layout
 
-### Configuration
+Sonarr and Radarr must share a single data root so they can see both the download folder and the media library. This enables **hardlinks** (instant, zero-copy moves) instead of slow cross-filesystem copies.
 
-Create `.env` file in the same directory as `docker-compose` file with the following structure
 ```
-OPENVPN_PROVIDER=...
-OPENVPN_CONFIG=...
-OPENVPN_USERNAME=...
-OPENVPN_PASSWORD=...
-
-DATA_PATH=/path/to/data/folder
-CONFIG_PATH=/path/to/config/folder
+$DATA_PATH/
+├── torrents/
+│   └── watch/          ← drop .torrent files here for auto-import
+├── media/
+│   ├── movies/         ← Radarr moves completed movies here
+│   └── tv/             ← Sonarr moves completed episodes here
 ```
 
-Only include [OpenVPN settings](https://haugene.github.io/docker-transmission-openvpn/supported-providers/) when using a vpn via `transmission-openvpn` image.
+Run `scripts/setup.sh` to create this structure automatically (see [Quick Start](#quick-start)), or create it manually:
 
-## Running it
-
-With `docker-compose` installing it is as simple as calling
-```
-docker-compose -f docker-compose.yaml -f docker-compose.transmission.yml up -d
+```bash
+mkdir -p /path/to/data/{torrents/watch,media/{movies,tv}}
 ```
 
-To include `Ombi`, instead call
+## Quick Start
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/HatboyWonder/PiMediaServer.git
+cd PiMediaServer
+
+# 2. Run setup: checks prerequisites, creates directories, generates .env
+./scripts/setup.sh
+
+# 3. Edit the generated .env file
+nano docker-compose/.env
+
+# 4. Start the stack
+./scripts/start.sh
 ```
-docker-compose -f docker-compose.yml -f docker-compose.transmission.yml -f docker-compose.ombi.yml up -d
+
+## Configuration (.env)
+
+Copy `docker-compose/.env-template` to `docker-compose/.env` and fill in your values:
+
+```bash
+cp docker-compose/.env-template docker-compose/.env
+nano docker-compose/.env
 ```
 
-To use `OpenVPN` instead use the following command
+Key variables:
+
+| Variable | Description |
+|---|---|
+| `COMPOSE_PROFILES` | Comma-separated list of profiles to activate (e.g. `jellyfin,transmission`) |
+| `DATA_PATH` | Absolute path to the media data root (see layout above) |
+| `CONFIG_PATH` | Absolute path for service config databases (preferably on SSD) |
+| `TZ` | Your timezone (e.g. `Europe/London`). [Full list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) |
+| `OPENVPN_PROVIDER` | VPN provider name — only needed for `transmission-openvpn` profile |
+| `OPENVPN_CONFIG` | VPN server config name |
+| `OPENVPN_USERNAME` | VPN account username |
+| `OPENVPN_PASSWORD` | VPN account password |
+
+Supported OpenVPN providers: https://haugene.github.io/docker-transmission-openvpn/supported-providers/
+
+## Scripts
+
+All scripts live in `scripts/` and work from any working directory (they resolve their own path to the compose file).
+
+| Script | Description |
+|---|---|
+| `scripts/setup.sh` | First-time setup: check prerequisites, create directories, generate `.env` |
+| `scripts/start.sh` | Start (or recreate) all services in detached mode |
+| `scripts/restart.sh` | Restart running containers without recreating them |
+| `scripts/down.sh` | Stop and remove all containers |
+| `scripts/upgrade.sh` | Pull latest images then restart the stack |
+| `scripts/status.sh` | Show container state and resource usage (CPU, memory, I/O) |
+| `scripts/health-check.sh` | Show Docker health status for each container |
+| `scripts/logs.sh [service...]` | Tail logs for one or all services |
+| `scripts/backup.sh [dest]` | Back up all service config directories to a `.tar.gz` archive |
+
+## Post-install Setup
+
+See **[docs/post-install.md](docs/post-install.md)** for the full step-by-step guide to configuring Prowlarr, Sonarr, Radarr, Transmission, Plex, and Jellyfin after the stack is running.
+
+## Repository Structure
+
 ```
-docker-compose -f docker-compose.yml -f docker-compose.transmission-openvpn.yml -f docker-compose.ombi.yml up -d
+PiMediaServer/
+├── README.md
+├── docker-compose/
+│   ├── docker-compose.yaml    ← service definitions
+│   └── .env-template          ← copy to .env and fill in your values
+├── scripts/
+│   ├── setup.sh               ← first-time setup
+│   ├── start.sh               ← start the stack
+│   ├── restart.sh             ← restart containers
+│   ├── down.sh                ← stop the stack
+│   ├── upgrade.sh             ← pull latest images and restart
+│   ├── status.sh              ← show resource usage
+│   ├── health-check.sh        ← show container health
+│   ├── logs.sh                ← tail service logs
+│   └── backup.sh              ← back up config directories
+└── docs/
+    └── post-install.md        ← detailed post-install configuration guide
 ```
-
-## Setup
-With all containers running there is some more configuration tasks to do. Starting bottom up:
-
-1. Navigate to the `Jackett` web interface (port: 9117). 
-    * Search and add your favourite indexers to your indexer list.
-
-2. Navigate to the `Sonarr` (port: 8989) and/or `Radarr` (port: 7878) web interface.
-    * Go to the Settings page. 
-    * Configure your indexers to point to the `Jackett` indexer urls.
-    * Setup the download client.
-        * Add transmission and set Category `tv` (sonarr) or `movies` (radarr).
-        * Add Remote Path Mapping
-            * Host: transmission url
-            * Remote Path: `/downloads` (`/data/completed/` with `transmission-openvpn` image)
-            * Local Path: `/data/torrents/` (`/data/torrents/complete/` with `transmission-openvpn` image)
-    * Add default paths (Add new series/movie > Search > Add different path)
-        * Sonarr: `/data/media/tv`
-        * Radarr: `/data/media/movies`
-
-3. Navigate to the `Plex` web interface (port: 32400). 
-    * Setup your libraries, pointing them to the ones configured in the `docker-compose`.
-
-4. If `Ombi` is included, navigate to the `Ombi` web interface (port: 3579).
-    * Go to the Settings page.
-    * Configure `Plex` (Media Server > Plex).
-    * Configure `Sonarr` (TV > Sonarr).
-    * Configure `Radarr` (Movies > Radarr).
-
-5. Enjoy!
