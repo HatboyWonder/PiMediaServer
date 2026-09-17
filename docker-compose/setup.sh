@@ -32,6 +32,15 @@ if [[ " ${services[*]} " == *" transmission "* && " ${services[*]} " == *" trans
   exit 1
 fi
 
+for path in "$DATA_PATH" "$CONFIG_PATH"; do
+  mkdir -p "$path" 2>/dev/null || true
+  if [[ ! -w "$path" ]]; then
+    echo "error: $path is not writable by $(id -un)" >&2
+    echo "       fix with: sudo chown -R $(id -u):$(id -g) $path" >&2
+    exit 1
+  fi
+done
+
 mkdir -p \
   "$DATA_PATH/media/movies" \
   "$DATA_PATH/media/tv" \
