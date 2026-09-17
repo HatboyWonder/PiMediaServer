@@ -1,14 +1,25 @@
+# Sonarr, Radarr and Prowlarr have no profile and therefore always run.
+# Everything else is opt-in via COMPOSE_PROFILES in .env.
+#
+# Pick at most one media server (plex | jellyfin) and at most one download
+# client (transmission | transmission-openvpn): the two download clients both
+# publish port 9091 and cannot run at the same time.
+
+x-lsio-env: &lsio-env
+  PUID: ${PUID:-1000}
+  PGID: ${PGID:-1000}
+  TZ: ${TZ:-Etc/UTC}
+
 services:
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
+    environment: *lsio-env
     volumes:
-      - ${CONFIG_PATH}/sonarr:/config
-      - ${DATA_PATH}:/data
+      - ${CONFIG_PATH:?}/sonarr:/config
+      # Mounted as a single tree so imports from /data/torrents to /data/media
+      # stay hardlinks instead of copies. Do not split this into subpaths.
+      - ${DATA_PATH:?}:/data
     ports:
       - 8989:8989
     restart: unless-stopped
@@ -16,15 +27,22 @@ services:
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
+    environment: *lsio-env
     volumes:
-      - ${CONFIG_PATH}/radarr:/config
-      - ${DATA_PATH}:/data
+      - ${CONFIG_PATH:?}/radarr:/config
+      - ${DATA_PATH:?}:/data
     ports:
       - 7878:7878
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment: *lsio-env
+    volumes:
+      - ${CONFIG_PATH:?}/prowlarr:/config
+    ports:
+      - 9696:9696
     restart: unless-stopped
 
   plex:
@@ -32,14 +50,14 @@ services:
     container_name: plex
     network_mode: host
     environment:
-      - PUID=1000
-      - PGID=1000
-      - VERSION=latest
-      - TZ=Europe/London
+      <<: *lsio-env
+      VERSION: latest
+      # Only needed to claim a brand new server, see https://plex.tv/claim
+      PLEX_CLAIM: ${PLEX_CLAIM:-}
     volumes:
-      - ${CONFIG_PATH}/plex:/config
-      - ${DATA_PATH}/media/movies:/movies
-      - ${DATA_PATH}/media/tv:/tv
+      - ${CONFIG_PATH:?}/plex:/config
+      - ${DATA_PATH:?}/media/movies:/movies
+      - ${DATA_PATH:?}/media/tv:/tv
     restart: unless-stopped
     profiles:
       - plex
@@ -47,44 +65,25 @@ services:
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
     container_name: jellyfin
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
+    environment: *lsio-env
     volumes:
-      - ${CONFIG_PATH}/jellyfin:/config
-      - ${DATA_PATH}/media/tv:/data/tvshows
-      - ${DATA_PATH}/media/movies:/data/movies
+      - ${CONFIG_PATH:?}/jellyfin:/config
+      - ${DATA_PATH:?}/media/movies:/data/movies
+      - ${DATA_PATH:?}/media/tv:/data/tvshows
     ports:
       - 8096:8096
     restart: unless-stopped
     profiles:
       - jellyfin
 
-  prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-    volumes:
-      - ${CONFIG_PATH}/prowlarr:/config
-    ports:
-      - 9696:9696
-    restart: unless-stopped
-
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
+    environment: *lsio-env
     volumes:
-      - ${CONFIG_PATH}/transmission:/config
-      - ${DATA_PATH}/torrents:/data/torrents
-      - ${DATA_PATH}/torrents:/watch
+      - ${CONFIG_PATH:?}/transmission:/config
+      - ${DATA_PATH:?}/torrents:/data/torrents
+      - ${DATA_PATH:?}/watch:/watch
     ports:
       - 9091:9091
       - 51413:51413
@@ -94,21 +93,28 @@ services:
       - transmission
 
   transmission-openvpn:
-    image: haugene/transmission-openvpn
+    image: haugene/transmission-openvpn:latest
     container_name: transmission-openvpn
     cap_add:
       - NET_ADMIN
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-      - OPENVPN_PROVIDER=${OPENVPN_PROVIDER}
-      - OPENVPN_CONFIG=${OPENVPN_CONFIG}
-      - OPENVPN_USERNAME=${OPENVPN_USERNAME}
-      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      <<: *lsio-env
+      OPENVPN_PROVIDER: ${OPENVPN_PROVIDER:-}
+      OPENVPN_CONFIG: ${OPENVPN_CONFIG:-}
+      OPENVPN_USERNAME: ${OPENVPN_USERNAME:-}
+      OPENVPN_PASSWORD: ${OPENVPN_PASSWORD:-}
+      LOCAL_NETWORK: ${LOCAL_NETWORK:-192.168.0.0/16}
+      # Kept identical to the `transmission` profile so Sonarr and Radarr need
+      # no reconfiguration when switching download client.
+      TRANSMISSION_DOWNLOAD_DIR: /data/torrents/complete
+      TRANSMISSION_INCOMPLETE_DIR: /data/torrents/incomplete
+      TRANSMISSION_INCOMPLETE_DIR_ENABLED: "true"
+      TRANSMISSION_WATCH_DIR: /watch
+      TRANSMISSION_WATCH_DIR_ENABLED: "true"
     volumes:
-      - ${CONFIG_PATH}/transmission-openvpn:/config
-      - ${DATA_PATH}/torrents:/data/torrents
+      - ${CONFIG_PATH:?}/transmission-openvpn:/config
+      - ${DATA_PATH:?}/torrents:/data/torrents
+      - ${DATA_PATH:?}/watch:/watch
     logging:
       driver: json-file
       options:
@@ -118,30 +124,30 @@ services:
     restart: unless-stopped
     profiles:
       - transmission-openvpn
-  
+
   seerr:
     image: ghcr.io/seerr-team/seerr:latest
     container_name: seerr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - LOG_LEVEL=debug
-      - TZ=Europe/London
-      - PORT=5055 #optional
+      <<: *lsio-env
+      LOG_LEVEL: info
+    volumes:
+      - ${CONFIG_PATH:?}/seerr:/app/config
     ports:
       - 5055:5055
-    volumes:
-      - ${CONFIG_PATH}/seer:/app/config
     restart: unless-stopped
+    profiles:
+      - seerr
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
+    # Runs as root and ignores PUID/PGID, so it does not use the shared anchor.
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-      - LOG_LEVEL=info
+      TZ: ${TZ:-Etc/UTC}
+      LOG_LEVEL: info
     ports:
       - 8191:8191
     restart: unless-stopped
+    profiles:
+      - flaresolverr
