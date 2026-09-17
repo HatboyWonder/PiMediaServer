@@ -50,7 +50,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=Europe/London
     volumes:
       - ${CONFIG_PATH}/jellyfin:/config
       - ${DATA_PATH}/media/tv:/data/tvshows
@@ -67,7 +67,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Etc/UTC
+      - TZ=Europe/London
     volumes:
       - ${CONFIG_PATH}/prowlarr:/config
     ports:
@@ -118,3 +118,30 @@ services:
     restart: unless-stopped
     profiles:
       - transmission-openvpn
+  
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: seerr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - LOG_LEVEL=debug
+      - TZ=Europe/London
+      - PORT=5055 #optional
+    ports:
+      - 5055:5055
+    volumes:
+      - ${CONFIG_PATH}/seer:/app/config
+    restart: unless-stopped
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - LOG_LEVEL=info
+    ports:
+      - 8191:8191
+    restart: unless-stopped
