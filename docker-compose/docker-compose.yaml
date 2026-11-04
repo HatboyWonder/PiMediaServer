@@ -8,7 +8,7 @@
 x-lsio-env: &lsio-env
   PUID: ${PUID:-1000}
   PGID: ${PGID:-1000}
-  TZ: ${TZ:-Etc/UTC}
+  TZ: ${TZ:-Europe/London}
 
 services:
   sonarr:
@@ -21,7 +21,7 @@ services:
       # stay hardlinks instead of copies. Do not split this into subpaths.
       - ${DATA_PATH:?}:/data
     ports:
-      - 8989:8989
+      - "8989:8989"
     restart: unless-stopped
 
   radarr:
@@ -32,7 +32,7 @@ services:
       - ${CONFIG_PATH:?}/radarr:/config
       - ${DATA_PATH:?}:/data
     ports:
-      - 7878:7878
+      - "7878:7878"
     restart: unless-stopped
 
   prowlarr:
@@ -42,7 +42,7 @@ services:
     volumes:
       - ${CONFIG_PATH:?}/prowlarr:/config
     ports:
-      - 9696:9696
+      - "9696:9696"
     restart: unless-stopped
 
   plex:
@@ -71,7 +71,7 @@ services:
       - ${DATA_PATH:?}/media/movies:/data/movies
       - ${DATA_PATH:?}/media/tv:/data/tvshows
     ports:
-      - 8096:8096
+      - "8096:8096"
     restart: unless-stopped
     profiles:
       - jellyfin
@@ -85,9 +85,9 @@ services:
       - ${DATA_PATH:?}/torrents:/data/torrents
       - ${DATA_PATH:?}/watch:/watch
     ports:
-      - 9091:9091
-      - 51413:51413
-      - 51413:51413/udp
+      - "9091:9091"
+      - "51413:51413"
+      - "51413:51413/udp"
     restart: unless-stopped
     profiles:
       - transmission
@@ -120,7 +120,7 @@ services:
       options:
         max-size: 10m
     ports:
-      - 9091:9091
+      - "9091:9091"
     restart: unless-stopped
     profiles:
       - transmission-openvpn
@@ -134,7 +134,7 @@ services:
     volumes:
       - ${CONFIG_PATH:?}/seerr:/app/config
     ports:
-      - 5055:5055
+      - "5055:5055"
     restart: unless-stopped
     profiles:
       - seerr
@@ -144,10 +144,10 @@ services:
     container_name: flaresolverr
     # Runs as root and ignores PUID/PGID, so it does not use the shared anchor.
     environment:
-      TZ: ${TZ:-Etc/UTC}
+      TZ: ${TZ:-Europe/London}
       LOG_LEVEL: info
     ports:
-      - 8191:8191
+      - "8191:8191"
     restart: unless-stopped
     profiles:
       - flaresolverr
